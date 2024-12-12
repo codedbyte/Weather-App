@@ -74,6 +74,49 @@ class WeatherApp(QWidget):
                            font-size: 50px;
                            }
 """)
+        #Connect the weather button to it's function
+        self.get_weather_button.clicked.connect(self.get_weather)
+    def get_weather(self):
+        api_key ="0fe08bc78eee6a467161818bcf11ee23"
+        city = self.city_input.text()
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}"
+
+        try: 
+            response = requests.get(url)
+            response.raise_for_status()
+            data= response.json()
+
+            if data["cod"] == 200:
+                self.display_weather(data)
+        except requests.exceptions.HTTPError:
+            match response.status_code:
+                case 400:
+                    print("Bad Request\nPlease Check your Input!")
+                case 401:
+                    print("Bad Request\nPlease Check your Input!")
+                case 403:
+                    print("Bad Request\nPlease Check your Input!")
+                case 404:
+                    print("Bad Request\nPlease Check your Input!")
+                case 500:
+                    print("Bad Request\nPlease Check your Input!")
+                case 502:
+                    print("Bad Request\nPlease Check your Input!")
+                case 503:
+                    print("Bad Request\nPlease Check your Input!")
+                case 504:
+                    print("Bad Request\nPlease Check your Input!")
+
+        except requests.exceptions.RequestException:
+            pass
+
+
+
+    def display_error(self,message):
+        pass
+    def display_weather(self,data):
+        print(data)
+
 
 #Creating the Weather App Object
 def main():
