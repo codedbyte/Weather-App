@@ -11,9 +11,9 @@ class WeatherApp(QWidget):
         self.city_label = QLabel("Enter a city name: ")
         self.city_input = QLineEdit(self)
         self.get_weather_button = QPushButton("Get Weather",self)
-        self.temperature_label = QLabel("50°C",self)
-        self.emoji_label = QLabel("☀️",self)
-        self.description_label = QLabel("Sunny!",self)
+        self.temperature_label = QLabel(self)
+        self.emoji_label = QLabel(self)
+        self.description_label = QLabel(self)
         self.initUI()
 
     def initUI(self):
@@ -76,11 +76,15 @@ class WeatherApp(QWidget):
 """)
         #Connect the weather button to it's function
         self.get_weather_button.clicked.connect(self.get_weather)
+
+    #Function to Get the Weather Data From AN API
     def get_weather(self):
         api_key ="0fe08bc78eee6a467161818bcf11ee23"
         city = self.city_input.text()
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}"
 
+        #Trying to get GET THE WEATHER DATA
+        #HANDLING EXCEPTIONS IN THIS BLOCK OF CODE
         try: 
             response = requests.get(url)
             response.raise_for_status()
@@ -88,34 +92,80 @@ class WeatherApp(QWidget):
 
             if data["cod"] == 200:
                 self.display_weather(data)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as http_error:
             match response.status_code:
                 case 400:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Bad Request\nPlease Check your Input!")
                 case 401:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Unauthorized\nInvalid API Key")
                 case 403:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Forbidden\nAccess Denied!")
                 case 404:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Not Found\nCity Not Found!")
                 case 500:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Internal Server Error\nPlease try Again Later!")
                 case 502:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Bad Gateway\nInvalid Response from the Server!")
                 case 503:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Service Unavailable\nServer is Down!")
                 case 504:
-                    print("Bad Request\nPlease Check your Input!")
+                    self.display_error("Gateway Timeout\nNo response from the server!")
+                case _:
+                    self.display_error(f"Http Error\n{http_error}")
 
-        except requests.exceptions.RequestException:
-            pass
+        except requests.exceptions.ConnectionError:
+           self.display_error("Connection Error\nCheck your Internet Connection")
+        except requests.exceptions.Timeout:
+           self.display_error("Timeout Error\nThe request Timed Out!")
+        except requests.exceptions.TooManyRedirects:
+           self.display_error("Too many Redirects\nCheck the URL")
+
+        except requests.exceptions.RequestException as req_error:
+            self.display_error(f"Request Error:\n{req_error}")
 
 
 
     def display_error(self,message):
-        pass
+        self.temperature_label.setStyleSheet("font-size: 30px;")
+        self.temperature_label.setText(message)
+        self.emoji_label.clear()
+        self.description_label.clear()
+
+
     def display_weather(self,data):
-        print(data)
+        temperature_k = data["main"]["temp"]
+        temperature_c = temperature_k - 273.15
+        new_temperature = f"{temperature_c:.0f}°C"
+        weather_description = data["weather"][0]["description"]
+        weather_id = data["weather"][0]["id"] 
+        self.temperature_label.setText(new_temperature)
+        self.emoji_label.setText(self.get_weather_emoji(weather_id))
+        self.description_label.setText(weather_description)
+
+    @staticmethod
+    def get_weather_emoji(weather_id):
+        if 200 <= weather_id <=232:
+            return "⛈️"
+        elif 300 <= weather_id <=321:
+            return "🌦️"
+        elif 500 <= weather_id <=531:
+            return "🌧️"
+        elif 600 <= weather_id <=622:
+            return "❄️"
+        elif 701 <= weather_id <=741:
+            return "🍃"
+        elif weather_id == 762:
+            return "🌋"
+        elif weather_id == 771:
+            return "💨"
+        elif weather_id == 781:
+            return "🌪️"
+        elif weather_id == 800:
+            return "☀️"
+        elif 801 <= weather_id <=804:
+            return "☁️"
+        else:
+            return ""
 
 
 #Creating the Weather App Object
